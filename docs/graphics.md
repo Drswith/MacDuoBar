@@ -64,7 +64,20 @@
 
 控制中心的最近录屏提示会使内容整体下移；测量以截图中的实际卡片定位，不固定截图行号。采样期间捕获到的错位、非同背景或非对应激活态的结果不作为最终验收数据。后续样式修改优先复核这些条件，避免反复盲调材质。
 
-现代面板的开合仍采用 AppKit 默认 `NSWindow.animationBehavior`，由系统根据无边框 `NSPanel` 属性推断；没有自定义位移、缩放或淡入淡出曲线。使用系统玻璃材质不代表开合动画与控制中心相同，当前没有控制中心开合录屏的校准证据。macOS 14／15 的回退则使用原生 `NSPopover` 开合。
+### 面板开合动画
+
+2026-10-27 复核已有素材：本项目 macOS 资料只有静态截图，quantex 的录屏是 iOS Duo 图标展开，不能充当 macOS 面板的时序。用户确认桌面空闲后，只补录了一次约 6 秒的原生 macOS 27.0.1 控制中心打开／关闭。原视频、111 个实际编码帧、原始 PTS、局部测量和拟合结果保存在忽略目录 `build/panel-motion-2026-10-27/`，没有追加参考采集，也没有打包这些素材。录制文件的名义帧率字段不作为显示刷新率；分析保留实际帧时间，没有补帧。
+
+第一张 Wi-Fi 卡片的白色圆底座在可辨识阶段直径基本不变，打开时向右约 1 pt、向下约 3 pt 到达稳态。关闭时反向移动并淡出。早期玻璃轮廓有形变，但不能据此把内容整体大幅缩放。选取这个底座的局部亮度估计透明度，得到以下近似；玻璃背景、低透明度帧和录屏压缩带来误差，不能推断为 Apple 内部曲线。
+
+| 方向 | 时长 | 三次 Bézier 控制点 | 几何 |
+| --- | --- | --- | --- |
+| 打开 | 240 ms | `(0.25, 0), (0.10, 1)` | 固定内容尺寸，从屏幕左上约 `(-1, -3) pt` 移回最终位置，透明度 0 → 1 |
+| 关闭 | 180 ms | `(0.15, 0), (0.25, 1)` | 反向轻移，透明度 1 → 0，完成后关闭窗口 |
+
+运行版通过公开 `NSAnimationContext` 同步动画窗口位置与透明度；`animationBehavior = .none` 禁用额外默认窗口动画，内容尺寸、字体和玻璃材质不变。快速反向点击复用同一个面板，过期的完成回调不能关闭已重新打开的面板。关闭中不拦截鼠标；打开设置、退出应用立即清理。系统「减少动态效果」启用时不移动位置，只进行 100 ms 淡入淡出。macOS 14／15 仍使用原生 `NSPopover` 开合。
+
+这是单背景、单系统样本的内容位移和透明度拟合，没有复刻控制中心玻璃轮廓的独立形变，也不宣称逐帧或所有环境完全一致。公开接口依据：[NSWindow.animationBehavior](https://developer.apple.com/documentation/appkit/nswindow/animationbehavior-swift.property)、[NSAnimationContext](https://developer.apple.com/documentation/appkit/nsanimationcontext)、[减少动态效果](https://developer.apple.com/documentation/appkit/nsworkspace/accessibilitydisplayshouldreducemotion)。
 
 面板外留 6 pt 容纳玻璃边缘，菜单栏锚点转换为屏幕坐标；窗口受对应显示器 `visibleFrame` 的水平 8 pt、垂直 6 pt 边距约束，玻璃表面的实际间距另计外留空间。靠近屏幕边缘时整体平移，小屏按需缩窄和滚动。设置预览使用设置窗口自身的锚点。
 

@@ -62,7 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        closeDetails(animated: false)
+        closeDetails()
         reader.stop()
     }
 
@@ -95,9 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func togglePanel(from view: NSView) {
-        if let panel = statusPanel, panel.isClosing {
-            panel.reopen()
-        } else if popover.isShown || statusPanel != nil {
+        if popover.isShown || statusPanel != nil {
             closeDetails()
         } else if #available(macOS 26, *) {
             showGlassPanel(from: view)
@@ -129,14 +127,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.contentView = host
         panel.delegate = self
         panel.onCancel = { [weak self] in self?.closeDetails() }
-        panel.onDismissed = { [weak self, weak panel] in
-            guard let self, self.statusPanel === panel else { return }
-            self.statusPanel = nil
-            if let monitor = self.outsideClickMonitor { NSEvent.removeMonitor(monitor) }
-            self.outsideClickMonitor = nil
-        }
         statusPanel = panel
-        panel.present(at: frame)
+        panel.makeKeyAndOrderFront(nil)
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             let primaryMouseDown = event.type == .leftMouseDown
             let location = NSEvent.mouseLocation
@@ -149,13 +141,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    private func closeDetails(animated: Bool = true) {
+    private func closeDetails() {
         popover.performClose(nil)
-        statusPanel?.dismiss(animated: animated)
+        let panel = statusPanel
+        statusPanel = nil
+        if let monitor = outsideClickMonitor { NSEvent.removeMonitor(monitor) }
+        outsideClickMonitor = nil
+        panel?.close()
     }
 
     private func showSettings() {
-        closeDetails(animated: false)
+        closeDetails()
         if settings == nil {
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 440, height: 430), styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
             window.title = "MacDuoBar 设置"
@@ -170,6 +166,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         settings?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
+}
+
+@MainActor
+private final class StatusPanel: NSPanel {
+    var onCancel: (() -> Void)?
+    override var canBecomeKey: Bool { true }
+    override func cancelOperation(_ sender: Any?) { onCancel?() }
 }
 
 private struct MetricRow: View {

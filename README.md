@@ -23,6 +23,6 @@ open build/MacDuoBar.app
 
 ## 结构
 
-`Sources/MacDuoBar/Readings.swift` 定义读数和配置；`SystemReader.swift` 通过系统公开接口采样；`StatusGlyph.swift` 绘制菜单栏图形；`ControlCenterView.swift` 实现按原生控制中心测量的现代面板；`StatusPanel.swift` 与 `PanelMotion.swift` 管理面板开合和反向，`PanelPlacement.swift` 计算屏幕锚点和边界，`PanelDismissal.swift` 协调同一状态栏按钮与外部关闭事件；`MacDuoBar.swift` 连接状态栏、分版本详情面板和设置。测试在 `Tests/MacDuoBarTests/`，应用元数据在 `Resources/Info.plist`。
+`Sources/MacDuoBar/Readings.swift` 定义读数和配置；`SystemReader.swift` 通过系统公开接口采样；`StatusGlyph.swift` 绘制菜单栏图形；`ControlCenterView.swift` 实现按原生控制中心测量的现代面板；`PanelPlacement.swift` 计算屏幕锚点和边界，`PanelDismissal.swift` 协调同一状态栏按钮与外部关闭事件；`MacDuoBar.swift` 连接状态栏、分版本详情面板和设置。测试在 `Tests/MacDuoBarTests/`，应用元数据在 `Resources/Info.plist`。
 
 当前功能边界与未实现项目统一维护在 [Cleanroom 规范](docs/cleanroom.md#功能范围)。本项目没有与 Apple 或参考产品建立关联。
